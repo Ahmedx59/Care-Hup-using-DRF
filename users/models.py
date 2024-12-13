@@ -3,11 +3,14 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
+    class GenderType(models.TextChoices):
+        MALE = 'Male'
+        FEMALE = 'Female'
     username = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=50 , blank=True)
-    gender = models.BooleanField()
-    birth_date = models.DateTimeField()
+    gender = models.CharField(max_length=50 , choices=GenderType.choices)
+    birth_date = models.DateTimeField(blank=True, null=True)
 
 
     USERNAME_FIELD = "email"
@@ -27,5 +30,5 @@ class DoctorNurseProfile(models.Model):
 
 
 class PatientProfile(models.Model):
-    user = models.OneToOneField(User , on_delete=models.CASCADE , related_name='patin_profile')
+    user = models.OneToOneField(User , on_delete=models.CASCADE , related_name='patient_profile')
     chronic_diseases = models.TextField()
