@@ -21,6 +21,9 @@ class User(AbstractUser):
     gender = models.CharField(max_length=50 , choices=GenderType.choices)
     birth_date = models.DateTimeField(blank=True, null=True)
     user_type = models.CharField(max_length=50 , choices=User_Type.choices)
+    activation_code = models.CharField(max_length=50, blank=True)
+    reset_pass_token = models.CharField(max_length=50 , blank=True)
+    reset_pass_expire_date = models.DateTimeField(null=True , blank=True) 
 
 
     USERNAME_FIELD = "email"
