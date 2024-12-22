@@ -7,9 +7,8 @@ from django.conf import settings
 from rest_framework import serializers
    
 from users.models import User 
-# from users.api.views import AuthUser
 
-class AuthSerializer(serializers.ModelSerializer):
+class SingUpSerializer(serializers.ModelSerializer):
     email = serializers.CharField(required = True)
     password = serializers.CharField(write_only = True , validators=[MinLengthValidator(8)] , required = True)
     confirm_password = serializers.CharField(required = True , write_only = True)
@@ -19,23 +18,27 @@ class AuthSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
-            raise serializers.ValidationError({'detail':'not successfully'})
+            raise serializers.ValidationError({'detail':'the passwords do not match'})
+        email_user = User.objects.filter(email = attrs['email']).first()
+        if email_user :
+            raise serializers.ValidationError({'detail':'this email is existed'})
         return super().validate(attrs)
     
     def create(self, validated_data):
+        
         validated_data.pop('confirm_password')
         validated_data['is_active'] = False
         validated_data['activation_code'] = get_random_string(16)
-        user = User.objects.create_user(**validated_data)
-    
+
         send_mail(
             f"Activation Code ",
-            f"welcome {user.username}\n Here is the activation code : {user.activation_code}.",
+            f"welcome {validated_data['username']}\n Here is the activation code : {validated_data['activation_code']}.",
             settings.EMAIL_HOST_USER,
-            {user.email},
+            {validated_data['email']},
             fail_silently=False,
         )
-        return user
+        user = User.objects.create_user(**validated_data)
+        return {}
     
 
 
@@ -53,6 +56,19 @@ class UserActivateSerializers(serializers.Serializer):
         return {}
 
 
+
+# class ActivateSerializer(serializers.ModelSerializer):
+#     code = serializers.CharField(required = True)
+    
+#     def create(self, validated_data):
+#         user_id = self.context['view'].kwargs['pk']
+#         user = User.objects.get(id=user_id)
+#         if user.activation_code != validated_data['code']:
+#             raise serializers.ValidationError({'detail':'not equal'})
+#         user.is_active = True
+#         user.activation_code = ''
+#         user.save()
+#         return {}
 
 
 

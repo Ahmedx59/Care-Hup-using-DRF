@@ -5,16 +5,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import AllowAny
 
-from .serializers import AuthSerializer , UserActivateSerializers
+from .serializers import SingUpSerializer , UserActivateSerializers
 from users.models import User
 
 
 class AuthUser(
-    mixins.CreateModelMixin,
     viewsets.GenericViewSet):
 
     queryset = User.objects.all()
-    serializer_class = AuthSerializer
+    serializer_class = SingUpSerializer
 
 
     def get_permissions(self):
@@ -22,19 +21,14 @@ class AuthUser(
             return [AllowAny()]
         return super().get_permissions()
 
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return AuthSerializer
-        return super().get_serializer_class()
-    
-    
-    # # @action(detail=True , methods=['post'])
-    # def create(self,*args, **kwargs):
-    #     data = self.request.data
-    #     serializer = self.get_serializer(data=data)
-    #     serializer.is_valid(raise_exception = True)
-    #     serializer.save()
-    #     return Response({"detail": "User created successfully.", "user": serializer.data})
+
+    @action(detail=False , methods=['post'])
+    def sign_up(self,*args, **kwargs):
+        data = self.request.data
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response({"detail": "User created successfully."})
     
 
         
@@ -44,5 +38,5 @@ class AuthUser(
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception =True)
         serializer.save()
-        return Response ({'detail':'your account created successfully'})
+        return Response ({'detail':'your account created successfully'},status=status.HTTP_200_OK)
   
