@@ -3,6 +3,8 @@ from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.core.validators import MinLengthValidator
 from django.conf import settings
+from django.contrib.auth.hashers import  check_password
+
 
 from rest_framework import serializers
    
@@ -54,6 +56,30 @@ class UserActivateSerializers(serializers.Serializer):
         user.activation_code = ''
         user.save()
         return {}
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(required = True)
+    new_password = serializers.CharField(required = True , write_only = True , validators=[MinLengthValidator(8)])
+    confirm_new_password = serializers.CharField(required = True , write_only = True)
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+
+        if not check_password(validated_data['password'] , user.password ):
+            raise serializers.ValidationError({'detail':'old password not equal password'})
+        
+        if validated_data['new_password'] != validated_data['confirm_new_password']:
+            raise serializers.ValidationError({'message':'The New Passwords do not match.'})
+        
+        user.set_password(validated_data['new_password'])
+        user.save()
+
+        return {}
+
+
+    def to_representation(self, instance):
+        return {'message': 'Password change process completed.'}
+
 
 
 

@@ -1,11 +1,11 @@
 from django.shortcuts import render
 
-from rest_framework import mixins , viewsets
+from rest_framework import mixins , viewsets , status
 from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import AllowAny
 
-from .serializers import SingUpSerializer , UserActivateSerializers
+from .serializers import SingUpSerializer , UserActivateSerializers , ChangePasswordSerializer
 from users.models import User
 
 
@@ -39,4 +39,11 @@ class AuthUser(
         serializer.is_valid(raise_exception =True)
         serializer.save()
         return Response ({'detail':'your account created successfully'},status=status.HTTP_200_OK)
-  
+    
+    @action(detail=False , methods=['post'] , serializer_class= ChangePasswordSerializer)
+    def change_password(self,*args, **kwargs):
+        data = self.request.data
+        serializer = self.get_serializer(data = data)
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response({'detail':'your password change successfully'})

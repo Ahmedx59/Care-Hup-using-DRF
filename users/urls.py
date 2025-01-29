@@ -8,5 +8,6 @@ router = DefaultRouter()
 router.register('user' , AuthUser , basename='create-user')
 
 
+
 app_name = 'users'
 urlpatterns = router.urls
