@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import AllowAny
 
-from .serializers import SingUpSerializer , UserActivateSerializers , ChangePasswordSerializer
+from .serializers import SingUpSerializer , UserActivateSerializers , ChangePasswordSerializer , ResetPasswordSerializer
 from users.models import User
 
 
@@ -47,3 +47,12 @@ class AuthUser(
         serializer.is_valid(raise_exception = True)
         serializer.save()
         return Response({'detail':'your password change successfully'})
+    
+    @action(detail=False , methods=['post'] , serializer_class = ResetPasswordSerializer)
+    def reset_password(self,*args, **kwargs):
+        data = self.request.data
+        serializer = self.get_serializer(data = data)
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response({'detail':'change is completed'})
+    
