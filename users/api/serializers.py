@@ -4,7 +4,8 @@ from django.core.mail import send_mail
 from django.core.validators import MinLengthValidator
 from django.conf import settings
 from django.contrib.auth.hashers import  check_password
-
+from django.utils import timezone
+from datetime import datetime , timedelta
 from random import randint
 
 from rest_framework import serializers
@@ -92,11 +93,37 @@ class ResetPasswordSerializer(serializers.Serializer):
         user = User.objects.filter(email = validated_data['email']).first()
         if not user:
             raise serializers.ValidationError({'detail':'not found'})
+        
+        user.reset_pass_token = get_random_string(10)
+        user.reset_pass_expire_date = datetime.now() + timedelta(minutes=30)
+        user.save()
+
         send_mail(
             f"Activation Code ",
-            f"welcome {user.username}\n Here is the activation code : http://127.0.0.1:8000/api/user/reset-password-activat.",
+            f"welcome {user.username}\n click this link to reset password : http://127.0.0.1:8000/api/user/confirm_reset_password/{user.reset_pass_token}.",
             settings.EMAIL_HOST_USER,
             {validated_data['email']},
             fail_silently=False,
         )
+        return {}
+
+class ConfirmResetPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(required = True , validators=[MinLengthValidator(8)])
+    confirm_password = serializers.CharField(required = True)
+
+
+    def create(self, validated_data):
+        token = self.context['view'].kwargs['token']
+        user = User.objects.filter(reset_pass_token = token).first()
+        if not user: 
+            raise serializers.ValidationError({'detail':'user not found'})
+        
+        if user.reset_pass_expire_date < timezone.now():
+            raise serializers.ValidationError({'message':'token is expired'})
+        
+        if validated_data['password'] != validated_data['confirm_password']:
+            raise serializers.ValidationError({'detail':'the passwords not confirm'}) 
+        
+        user.set_password(validated_data['password'])
+        user.save()
         return {}

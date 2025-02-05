@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import AllowAny
 
-from .serializers import SingUpSerializer , UserActivateSerializers , ChangePasswordSerializer , ResetPasswordSerializer
+from .serializers import SingUpSerializer , UserActivateSerializers , ChangePasswordSerializer , ResetPasswordSerializer , ConfirmResetPasswordSerializer , ResetPasswordConfirm
 from users.models import User
 
 
@@ -54,5 +54,17 @@ class AuthUser(
         serializer = self.get_serializer(data = data)
         serializer.is_valid(raise_exception = True)
         serializer.save()
-        return Response({'detail':'change is completed'})
+        return Response({'detail':'check message on mail'})
     
+    @action(
+        detail=False ,
+        methods=['post'] ,
+        serializer_class = ConfirmResetPasswordSerializer , 
+        url_path=r'confirm-reset-password/(?P<token>\d+)'
+    )
+    def confirm_reset_password(self,*args, **kwargs):
+        data = self.request.data
+        serializer = self.get_serializer(data = data)
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response({'detail':'password change successfully'})
