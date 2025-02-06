@@ -10,7 +10,7 @@ from random import randint
 
 from rest_framework import serializers
    
-from users.models import User 
+from users.models import User , DoctorNurseProfile ,PatientProfile
 
 
 
@@ -127,3 +127,22 @@ class ConfirmResetPasswordSerializer(serializers.Serializer):
         user.set_password(validated_data['password'])
         user.save()
         return {}
+    
+class UserRetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
+class ProfileDoctorAndNurseSerializer(serializers.ModelSerializer):
+    user = UserRetSerializer()
+    class Meta:
+        model = DoctorNurseProfile
+        fields = '__all__'
+
+class PatientProfileSerializer(serializers.ModelSerializer):
+    user = UserRetSerializer()
+    class Meta():
+        model = PatientProfile
+        fields = '__all__'
+
