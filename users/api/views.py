@@ -1,11 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render , get_object_or_404
 
 from rest_framework import mixins , viewsets , status , serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import AllowAny
 
-from .serializers import SingUpSerializer , UserActivateSerializers , ChangePasswordSerializer , ResetPasswordSerializer , ConfirmResetPasswordSerializer , ProfileDoctorAndNurseSerializer ,PatientProfileSerializer
+from .serializers import SingUpSerializer , UserActivateSerializers , ChangePasswordSerializer , ResetPasswordSerializer , ConfirmResetPasswordSerializer , ProfileDoctorAndNurseSerializer ,PatientProfileSerializer 
 from users.models import User , DoctorNurseProfile ,PatientProfile
 
 
@@ -87,10 +87,27 @@ class UserProfile(viewsets.GenericViewSet):
     @action(detail = True , methods=['get'] , serializer_class = PatientProfileSerializer)
     def Patient(self ,*args, **kwargs):
         pk = self.kwargs['pk']
-        Patient = PatientProfile.objects.filter(id = pk).first()
+        Patient = get_object_or_404(PatientProfile , id =pk)
 
-        if not Patient:
-            raise serializers.ValidationError({'error':'Patient not found'})
+        # Patient = PatientProfile.objects.filter(id = pk).first()
+
+        # if not Patient:
+        #     raise serializers.ValidationError({'error':'Patient not found'})
         
-        serializer = self.get_serializer(Patient)
+        serializer = PatientProfileSerializer(Patient)
+        return Response(serializer.data)
+
+
+    @action(detail=False , methods=['get'])
+    def my_profile(self,request,*args, **kwargs):
+        user = self.request.user
+        
+        if user.user_type in [User.User_Type.DOCTOR , User.User_Type.NURSE]:
+            serializer = ProfileDoctorAndNurseSerializer(user.doctor_profile)
+        
+        if user.user_type == User.User_Type.PATIENT:
+            serializer = PatientProfileSerializer(user.patient_profile)
+
+        if not user.user_type:
+            raise serializers.ValidationError({'error':'the user dont have user type'})
         return Response(serializer.data)
