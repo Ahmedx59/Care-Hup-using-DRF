@@ -142,7 +142,18 @@ class ProfileDoctorAndNurseSerializer(serializers.ModelSerializer):
 
 class PatientProfileSerializer(serializers.ModelSerializer):
     user = UserRetSerializer()
-    class Meta():
+    class Meta:
         model = PatientProfile
         fields = '__all__'
 
+class ListDoctorSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    class Meta:
+        model = DoctorNurseProfile
+        fields = ['user','price']
+
+class ListNurseSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    class Meta:
+        model = DoctorNurseProfile
+        fields = ['user','price']
