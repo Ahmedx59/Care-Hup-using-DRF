@@ -19,6 +19,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=50 , blank=True)
     gender = models.CharField(max_length=50 , choices=GenderType.choices)
+    image = models.ImageField(upload_to='image_user',blank=True, null=True)
     birth_date = models.DateTimeField(blank=True, null=True)
     user_type = models.CharField(max_length=50 , choices=User_Type.choices)
     activation_code = models.CharField(max_length=50, blank=True)
@@ -27,7 +28,7 @@ class User(AbstractUser):
 
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username"]
+    REQUIRED_FIELDS = ["username","user_type"]
 
     def __str__(self):
         return self.username
@@ -39,7 +40,7 @@ class DoctorNurseProfile(models.Model):
     price = models.IntegerField( blank=True, null=True)
     experience_year = models.IntegerField(blank=True, null=True)
     about = models.TextField(max_length=500, blank=True)
-    certificates = models.TextField(max_length=500, blank=True)
+    certificates = models.FileField(upload_to='image_certificates', max_length=100 ,blank=True)
 
     def __str__(self):
         return f"profile {self.id} for {str(self.user)}"

@@ -10,19 +10,20 @@ from random import randint
 
 from rest_framework import serializers
    
-from users.models import User , DoctorNurseProfile ,PatientProfile
+from users.models import User , DoctorNurseProfile ,PatientProfile 
 
 
 
 
-class SingUpSerializer(serializers.ModelSerializer):
+class SingUpSerializer(serializers.Serializer):
     email = serializers.CharField(required = True)
     password = serializers.CharField(write_only = True , validators=[MinLengthValidator(8)] , required = True)
     confirm_password = serializers.CharField(required = True , write_only = True)
-    class Meta:
-        model = User
-        fields = ['username','email','password','confirm_password']
-    
+    user_type = serializers.CharField(required = True)
+    gender = serializers.CharField(required = True)
+    phone_number = serializers.IntegerField(required = True)
+    birth_date = serializers.DateTimeField(required = True)
+
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
             raise serializers.ValidationError({'detail':'the passwords do not match'})
@@ -45,12 +46,67 @@ class SingUpSerializer(serializers.ModelSerializer):
             fail_silently=False,
         )
         user = User.objects.create_user(**validated_data)
+
         return {}
+    
+class SignUpDoctorNurseSerializer(serializers.Serializer):
+    username = serializers.CharField(required = True)
+    email = serializers.CharField(required = True)
+    password = serializers.CharField(write_only = True , validators=[MinLengthValidator(8)] , required = True)
+    confirm_password = serializers.CharField(required = True , write_only = True)
+    user_type = serializers.ChoiceField(choices=User.User_Type.choices , required = True)
+    certificates = serializers.FileField(required = True)
+    gender = serializers.ChoiceField(choices=User.GenderType.choices ,required = True)
+    phone_number = serializers.IntegerField()
+    birth_date = serializers.DateTimeField()
+    price = serializers.IntegerField()
+    about = serializers.CharField()
+    experience_year = serializers.IntegerField()
+    specialty = serializers.CharField()
+    
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({'error':'the passwords do not match'})
+        email_user = User.objects.filter(email = attrs['email']).first()
+        if email_user :
+            raise serializers.ValidationError({'detail':'this email is existed'})
+        return super().validate(attrs)
+
+    def create(self, validated_data):
+        
+        validated_data.pop('confirm_password')
+        validated_data['is_active'] = False
+        validated_data['activation_code'] = randint(1000,9999)
+
+        certificates = validated_data.pop('certificates')
+        about = validated_data.pop('about')
+        experience_year = validated_data.pop('experience_year')
+        price = validated_data.pop('price')
+        specialty = validated_data.pop('specialty')
+
+        send_mail(
+            f"Activation Code ",
+            f"welcome {validated_data['username']}\n Here is the activation code : {validated_data['activation_code']}.",
+            settings.EMAIL_HOST_USER,
+            {validated_data['email']},
+            fail_silently=False,
+        )
+        user = User.objects.create_user(**validated_data)
+        user_profile = DoctorNurseProfile.objects.filter(user = user).first()
+        user_profile.price = price
+        user_profile.experience_year = experience_year
+        user_profile.about = about
+        user_profile.certificates = certificates
+        user_profile.save()
+
+        return {}
+
+        
     
 
 
 class UserActivateSerializers(serializers.Serializer):
-    code = serializers.CharField(required=True , write_only=True , )
+    code = serializers.CharField(required=True , write_only=True )
 
     def create(self, validated_data):
         user_id = self.context['view'].kwargs['pk']

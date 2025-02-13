@@ -13,8 +13,9 @@ from .serializers import (
     ConfirmResetPasswordSerializer , 
     ProfileDoctorAndNurseSerializer ,
     PatientProfileSerializer , 
-    ListDoctorSerializer,
-    ListNurseSerializer
+    ListDoctorSerializer ,
+    ListNurseSerializer ,
+    SignUpDoctorNurseSerializer ,
 )
 from users.models import User , DoctorNurseProfile ,PatientProfile
 
@@ -33,13 +34,20 @@ class AuthUser(
 
 
     @action(detail=False , methods=['post'])
-    def sign_up(self,*args, **kwargs):
+    def sign_up_patient(self,*args, **kwargs):
         data = self.request.data
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception = True)
         serializer.save()
-        return Response({"detail": "User created successfully."})
+        return Response({"detail": "User Created Successfully."})
     
+    @action(detail=False , methods= ['post'],serializer_class = SignUpDoctorNurseSerializer)
+    def sign_up_doctor_nurse(self,*args, **kwargs):
+        data = self.request.data
+        serializer = self.get_serializer(data = data)
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response({'detail':'User Created Successfully.'})    
 
         
     @action(detail=True , methods=['post'] , serializer_class=UserActivateSerializers)
