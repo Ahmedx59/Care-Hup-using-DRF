@@ -1,14 +1,16 @@
 from uuid import uuid4
+
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
 from django.core.validators import MinLengthValidator
 from django.conf import settings
 from django.contrib.auth.hashers import  check_password
 from django.utils import timezone
-from datetime import datetime , timedelta
-from random import randint
 
 from rest_framework import serializers
+
+from random import randint
+from datetime import datetime , timedelta
    
 from users.models import User , DoctorNurseProfile ,PatientProfile 
 
