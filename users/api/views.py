@@ -1,9 +1,11 @@
 from django.shortcuts import render , get_object_or_404
 
-from rest_framework import mixins , viewsets , status , serializers
+from rest_framework import mixins , viewsets , status , serializers ,filters
 from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.permissions import AllowAny
+from django_filters.rest_framework import DjangoFilterBackend
+
 
 from .serializers import (
     SingUpSerializer , 
@@ -16,9 +18,12 @@ from .serializers import (
     ListDoctorSerializer ,
     ListNurseSerializer ,
     SignUpDoctorNurseSerializer ,
+    SpecialtySerializer,
+    UpdateProfileDoctorAndNurseSerializer,
 )
-from users.models import User , DoctorNurseProfile ,PatientProfile
 
+from users.models import User , DoctorNurseProfile ,PatientProfile, SpecialtyDoctor
+from users.filter import DoctorFilter
 
 class AuthUser(
     viewsets.GenericViewSet):
@@ -39,7 +44,7 @@ class AuthUser(
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception = True)
         serializer.save()
-        return Response({"detail": "User Created Successfully."})
+        return Response({"detail": "check your email."})
     
     @action(detail=False , methods= ['post'],serializer_class = SignUpDoctorNurseSerializer)
     def sign_up_doctor_nurse(self,*args, **kwargs):
@@ -47,7 +52,7 @@ class AuthUser(
         serializer = self.get_serializer(data = data)
         serializer.is_valid(raise_exception = True)
         serializer.save()
-        return Response({'detail':'User Created Successfully.'})    
+        return Response({'detail':'check your email.'})
 
         
     @action(detail=True , methods=['post'] , serializer_class=UserActivateSerializers)
@@ -130,6 +135,24 @@ class UserProfile(viewsets.GenericViewSet):
             raise serializers.ValidationError({'error':'the user dont have user type'})
         return Response(serializer.data)
     
+    @action(detail=False , methods=['put'], serializer_class=UpdateProfileDoctorAndNurseSerializer)
+    def edit_my_profile(self , request , *args, **kwargs):
+        user = request.user
+        data = request.data
+        
+        if user.user_type in [User.User_Type.DOCTOR , User.User_Type.NURSE]:
+            serializer = self.get_serializer(user.doctor_profile, data = data)
+        
+        # if user.user_type == User.User_Type.PATIENT:
+        #     print(user,'*'*100)
+        #     serializer = PatientProfileSerializer(data = data)
+
+            serializer.is_valid(raise_exception = True)
+            serializer.save()
+
+        return Response(serializer.data)
+
+
     # @action(detail=False , methods=['get'] , serializer_class = ListDoctorSerializer)
     # def list_doctor(self,request,*args, **kwargs):
     #     doctors = DoctorNurseProfile.objects.filter(user__user_type = User.User_Type.DOCTOR)
@@ -137,12 +160,15 @@ class UserProfile(viewsets.GenericViewSet):
     #     serializer = self.get_serializer(doctors, many =True)
     #     return Response(serializer.data)
 
-class Doctors(mixins.ListModelMixin,
+class DoctorsViewSet(
+    mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet):
 
     queryset = DoctorNurseProfile.objects.all()
     serializer_class = ListDoctorSerializer
+    filterset_class = DoctorFilter
+    
 
     def get_serializer_class(self):
         if self.action == 'retrieve':            
@@ -152,12 +178,15 @@ class Doctors(mixins.ListModelMixin,
     def get_queryset(self):
         return super().get_queryset().filter(user__user_type = User.User_Type.DOCTOR)
     
-class Nurse(mixins.ListModelMixin,
-            mixins.RetrieveModelMixin,
+class NurseViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
     viewsets.GenericViewSet):
 
     queryset = DoctorNurseProfile.objects.all()
     serializer_class = ListNurseSerializer
+    filterset_class = DoctorFilter
+
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -166,3 +195,21 @@ class Nurse(mixins.ListModelMixin,
     
     def get_queryset(self):
         return super().get_queryset().filter(user__user_type = User.User_Type.NURSE)
+    
+class ProfileViewSet(
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet):
+
+    queryset = PatientProfile.objects.all()
+    serializer_class = PatientProfileSerializer
+
+    def get_serializer(self, *args, **kwargs):
+
+        return super().get_serializer(*args, **kwargs)
+        
+class SpecialtyDoctorViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+    ):
+    queryset = SpecialtyDoctor.objects.all()
+    serializer_class = SpecialtySerializer

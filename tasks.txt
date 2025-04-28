@@ -1,0 +1,10 @@
+add field offers endpoint
+add field specialty endpoint(X)
+    in edit my profile
+data in cites , Governorate
+
+
+Doctors filter by city , specialty
+
+add offers doctors is (price integer only)(X)
+>>>
